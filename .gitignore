@@ -1,0 +1,21 @@
+# Binaries
+agentpack
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Coverage
+*.out
+coverage.out
+
+# IDE/editor files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
