@@ -1,4 +1,4 @@
-module agentpack
+module github.com/Bbeboy/AgentPack
 
 go 1.23
 

@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"agentpack/internal/fsutil"
-	"agentpack/internal/prompt"
-	"agentpack/internal/storage"
+	"github.com/Bbeboy/AgentPack/internal/fsutil"
+	"github.com/Bbeboy/AgentPack/internal/prompt"
+	"github.com/Bbeboy/AgentPack/internal/storage"
 	"github.com/spf13/cobra"
 )
 

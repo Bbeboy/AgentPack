@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"agentpack/internal/storage"
+	"github.com/Bbeboy/AgentPack/internal/storage"
 	"github.com/spf13/cobra"
 )
 

@@ -1,5 +1,5 @@
 # Binaries
-agentpack
+/agentpack
 *.exe
 *.exe~
 *.dll
@@ -12,6 +12,17 @@ agentpack
 # Coverage
 *.out
 coverage.out
+
+# Local env and secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
 
 # IDE/editor files
 .idea/

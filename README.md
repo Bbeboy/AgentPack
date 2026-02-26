@@ -18,12 +18,13 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
 
 ## Tabla de contenido
 
+- [Instalacion express (2 minutos)](#instalacion-express-2-minutos)
 - [Requisitos](#requisitos)
 - [Instalacion](#instalacion)
-  - [Opcion 1: go install](#opcion-1-go-install)
+  - [Opcion recomendada: go install](#opcion-recomendada-go-install)
+  - [Si agentpack no aparece en PATH](#si-agentpack-no-aparece-en-path)
   - [Opcion 2: build desde fuente](#opcion-2-build-desde-fuente)
-  - [Usar agentpack globalmente](#usar-agentpack-globalmente)
-  - [Autocompletado (Fish)](#autocompletado-fish)
+  - [Autocompletado](#autocompletado)
 - [Uso rapido](#uso-rapido)
 - [Conceptos clave](#conceptos-clave)
 - [Referencia de comandos](#referencia-de-comandos)
@@ -35,6 +36,17 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
 - [Contribuciones](#contribuciones)
 - [Licencia](#licencia)
 
+## Instalacion express (2 minutos)
+
+Si ya tienes Go instalado, con esto puedes empezar:
+
+```bash
+go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
+agentpack --help
+```
+
+Si `agentpack` no se encuentra, revisa la seccion [Si agentpack no aparece en PATH](#si-agentpack-no-aparece-en-path).
+
 ## Requisitos
 
 - Go `1.23+`
@@ -44,31 +56,53 @@ Nota: el codigo ya usa `filepath` y `os.UserHomeDir`, por lo que esta preparado 
 
 ## Instalacion
 
-### Opcion 1: go install
-
-Cuando publiques en GitHub, instala asi:
+### Opcion recomendada: go install
 
 ```bash
-go install github.com/tu-usuario/agentpack/cmd/agentpack@latest
+go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
+```
+
+Verifica que quedo instalado:
+
+```bash
+agentpack --help
+```
+
+### Si agentpack no aparece en PATH
+
+`go install` deja el binario en `GOBIN` o, si no esta definido, en `$(go env GOPATH)/bin`.
+
+En la mayoria de instalaciones de Go, eso equivale a `~/go/bin`.
+
+Bash:
+
+```bash
+echo 'export PATH="$HOME/go/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Zsh:
+
+```bash
+echo 'export PATH="$HOME/go/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Fish:
+
+```fish
+fish_add_path ~/go/bin
 ```
 
 ### Opcion 2: build desde fuente
 
 ```bash
-git clone https://github.com/tu-usuario/agentpack.git
-cd agentpack
+git clone https://github.com/Bbeboy/AgentPack.git
+cd AgentPack
 go mod tidy
 go build -o agentpack ./cmd/agentpack
-```
-
-### Usar agentpack globalmente
-
-Para poder ejecutar `agentpack` desde cualquier carpeta:
-
-```bash
-mkdir -p ~/.local/bin
-cp ./agentpack ~/.local/bin/agentpack
-chmod +x ~/.local/bin/agentpack
+install -m 755 ./agentpack ~/.local/bin/agentpack
+agentpack --help
 ```
 
 En muchos sistemas Linux, `~/.local/bin` ya esta en `PATH`. Si no lo esta:
@@ -80,7 +114,15 @@ En muchos sistemas Linux, `~/.local/bin` ya esta en `PATH`. Si no lo esta:
 fish_add_path ~/.local/bin
 ```
 
-### Autocompletado (Fish)
+### Autocompletado
+
+Comando rapido para la sesion actual:
+
+```bash
+source <(agentpack completion bash)
+```
+
+Para Fish (persistente):
 
 ```fish
 agentpack completion fish > ~/.config/fish/completions/agentpack.fish
@@ -193,10 +235,10 @@ Salida esperada:
 ```text
 [agentpack] Creando paquete 'backend-base'...
 [agentpack] Origen: /mi/proyecto/.agents/skills
-[agentpack] Destino: /home/tu-usuario/.agentpack/packages-skills/backend-base
+[agentpack] Destino: /home/usuario/.agentpack/packages-skills/backend-base
 [agentpack] Copiando skills...
 [agentpack] Listo. Paquete creado: backend-base
-[agentpack] Ruta: /home/tu-usuario/.agentpack/packages-skills/backend-base
+[agentpack] Ruta: /home/usuario/.agentpack/packages-skills/backend-base
 ```
 
 ### 2) Crear paquete usando `.`
@@ -224,7 +266,7 @@ Salida esperada (ejemplo):
 
 ```text
 [agentpack] Instalando paquete 'backend-base'...
-[agentpack] Paquete: /home/tu-usuario/.agentpack/packages-skills/backend-base
+[agentpack] Paquete: /home/usuario/.agentpack/packages-skills/backend-base
 [agentpack] Destino: /ruta/proyecto/.agents/skills
 [agentpack] La carpeta destino no existe. Creando...
 [agentpack] Instaladas: 4
@@ -281,7 +323,7 @@ Salida esperada (ejemplo):
 - docker
 - golang-api
 - testing
-[agentpack] Ruta: /home/tu-usuario/.agentpack/packages-skills/backend-base
+[agentpack] Ruta: /home/usuario/.agentpack/packages-skills/backend-base
 ```
 
 ### 7) Eliminar una skill especifica
