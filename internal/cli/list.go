@@ -11,7 +11,7 @@ import (
 func newListCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "list",
-		Short: "Lista los paquetes de skills guardados",
+		Short: t("list.short"),
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			packagesRoot, err := storage.PackagesRoot()
@@ -22,11 +22,10 @@ func newListCmd() *cobra.Command {
 			entries, err := os.ReadDir(packagesRoot)
 			if err != nil {
 				if os.IsNotExist(err) {
-					fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] No hay paquetes guardados.")
-					fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Ruta: %s\n", packagesRoot)
+					fmt.Fprintln(cmd.OutOrStdout(), out("list.empty"))
 					return nil
 				}
-				return fmt.Errorf("no se pudo leer la ruta de paquetes: %w", err)
+				return fmt.Errorf(t("list.read", err))
 			}
 
 			packages := make([]string, 0)
@@ -37,16 +36,14 @@ func newListCmd() *cobra.Command {
 			}
 
 			if len(packages) == 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] No hay paquetes guardados.")
-				fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Ruta: %s\n", packagesRoot)
+				fmt.Fprintln(cmd.OutOrStdout(), out("list.empty"))
 				return nil
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Paquetes disponibles (%d):\n", len(packages))
+			fmt.Fprintln(cmd.OutOrStdout(), out("list.title", len(packages)))
 			for _, name := range packages {
 				fmt.Fprintf(cmd.OutOrStdout(), "- %s\n", name)
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Ruta: %s\n", packagesRoot)
 
 			return nil
 		},

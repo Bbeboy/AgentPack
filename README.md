@@ -8,11 +8,14 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
 
 - Crea paquetes desde una ruta de skills existente.
 - Soporta deteccion de ruta cuando usas `.` como origen.
-- Instala en `.agents/skills` del proyecto actual.
+- Instala en la carpeta `skills` de la plataforma detectada (por ejemplo `.opencode/skills`, `.agents/skills`, `.cla/skills`, etc.).
 - Detecta conflictos por nombre de skill y pregunta si sobrescribir o ignorar.
 - Mantiene archivos existentes que no estan en conflicto.
 - Permite borrar paquetes con confirmacion o de forma forzada.
+- Permite eliminar rutas internas de un paquete con `remove <ruta> --from <paquete>`.
+- Permite agregar archivos o carpetas a un paquete con `add <ruta> --to <paquete>`.
 - Permite listar skills por paquete y eliminar una skill especifica.
+- Soporta idioma EN/ES para ayuda y feedback (`config set language` o `lang`).
 - Incluye modo seguro `--dry-run` para revisar borrados sin ejecutar.
 - Soporta autocompletado para `bash`, `zsh`, `fish` y `powershell`.
 
@@ -172,6 +175,31 @@ agentpack list-skills backend-base
 agentpack remove-skill backend-base docker
 ```
 
+7. Agregar archivo o carpeta a un paquete:
+
+```bash
+agentpack add ./mi-nueva-skill --to backend-base
+```
+
+8. Eliminar ruta interna de un paquete:
+
+```bash
+agentpack remove docker/SKILL.md --from backend-base
+```
+
+9. Cambiar idioma de salida:
+
+```bash
+agentpack config set language es
+agentpack lang en
+```
+
+10. Renombrar un paquete:
+
+```bash
+agentpack rename backend-base backend-v2
+```
+
 ## Conceptos clave
 
 ### Donde se guardan los paquetes
@@ -184,7 +212,16 @@ Los paquetes se guardan localmente en:
 
 ### Donde se instalan las skills
 
-`install` copia las skills a:
+`install` detecta la plataforma por carpetas del proyecto y copia las skills a `<plataforma>/skills`.
+
+Ejemplos de destino:
+
+- `.opencode/skills`
+- `.agents/skills`
+- `.cla/skills`
+- `.cursor/skills`
+
+Si no detecta ninguna plataforma, usa fallback a:
 
 ```text
 .agents/skills
@@ -211,15 +248,20 @@ Ejemplos validos:
 | Comando | Descripcion | Ejemplo |
 | --- | --- | --- |
 | `agentpack create <nombre-paquete> <ruta-skills>` | Crea un paquete desde una ruta de skills. | `agentpack create backend-base /mi/proyecto/.agents/skills` |
-| `agentpack install <nombre-paquete>` | Instala un paquete en `.agents/skills` del proyecto actual. | `agentpack install backend-base` |
+| `agentpack install <nombre-paquete>` | Instala un paquete en la carpeta `skills` de la plataforma detectada (fallback `.agents/skills`). | `agentpack install backend-base` |
+| `agentpack add <archivo-o-carpeta> --to <nombre-paquete>` | Agrega un archivo o carpeta a un paquete existente. | `agentpack add ./nueva-skill --to backend-base` |
 | `agentpack list` | Lista paquetes guardados localmente. | `agentpack list` |
 | `agentpack list-skills <nombre-paquete>` | Lista las skills dentro de un paquete. | `agentpack list-skills backend-base` |
+| `agentpack rename <nombre-actual> <nombre-nuevo>` | Renombra un paquete existente. | `agentpack rename backend-base backend-v2` |
 | `agentpack remove <nombre-paquete>` | Elimina un paquete guardado (con confirmacion). | `agentpack remove backend-base` |
+| `agentpack remove <archivo-o-carpeta> --from <nombre-paquete>` | Elimina una ruta especifica dentro de un paquete. | `agentpack remove docker/SKILL.md --from backend-base` |
 | `agentpack remove <nombre-paquete> --force` | Elimina un paquete sin preguntar confirmacion. | `agentpack remove backend-base -f` |
 | `agentpack remove <nombre-paquete> --dry-run` | Simula la eliminacion de un paquete sin borrar. | `agentpack remove backend-base --dry-run` |
 | `agentpack remove-skill <nombre-paquete> <nombre-skill>` | Elimina una skill especifica de un paquete (con confirmacion). | `agentpack remove-skill backend-base docker` |
 | `agentpack remove-skill <nombre-paquete> <nombre-skill> -f` | Elimina una skill sin preguntar confirmacion. | `agentpack remove-skill backend-base docker -f` |
 | `agentpack remove-skill <nombre-paquete> <nombre-skill> --dry-run` | Simula la eliminacion de una skill sin borrar. | `agentpack remove-skill backend-base docker --dry-run` |
+| `agentpack config set language <en\|es>` | Guarda el idioma de salida global. | `agentpack config set language es` |
+| `agentpack lang <en\|es>` | Atajo para cambiar idioma. | `agentpack lang en` |
 | `agentpack completion [bash\|zsh\|fish\|powershell]` | Genera script de autocompletado. | `agentpack completion fish` |
 
 ## Flujo completo con ejemplos
@@ -233,12 +275,8 @@ agentpack create backend-base /mi/proyecto/.agents/skills
 Salida esperada:
 
 ```text
-[agentpack] Creando paquete 'backend-base'...
-[agentpack] Origen: /mi/proyecto/.agents/skills
-[agentpack] Destino: /home/usuario/.agentpack/packages-skills/backend-base
-[agentpack] Copiando skills...
-[agentpack] Listo. Paquete creado: backend-base
-[agentpack] Ruta: /home/usuario/.agentpack/packages-skills/backend-base
+agentpack: creating package 'backend-base'
+agentpack: package created at /home/usuario/.agentpack/packages-skills/backend-base
 ```
 
 ### 2) Crear paquete usando `.`
@@ -265,27 +303,21 @@ agentpack install backend-base
 Salida esperada (ejemplo):
 
 ```text
-[agentpack] Instalando paquete 'backend-base'...
-[agentpack] Paquete: /home/usuario/.agentpack/packages-skills/backend-base
-[agentpack] Destino: /ruta/proyecto/.agents/skills
-[agentpack] La carpeta destino no existe. Creando...
-[agentpack] Instaladas: 4
-[agentpack] Sobrescritas: 0
-[agentpack] Ignoradas: 0
-[agentpack] Listo.
+agentpack: installing 'backend-base' into /ruta/proyecto/.opencode/skills
+agentpack: installed=4 overwritten=0 skipped=0
 ```
 
 ### 4) Instalar paquete con conflictos
 
-Si ya existe una skill con el mismo nombre en `.agents/skills`, se considera conflicto.
+Si ya existe una skill con el mismo nombre en el destino detectado (`<plataforma>/skills`), se considera conflicto.
 
 Ejemplo:
 
 ```text
-[agentpack] Detectando conflictos...
-[agentpack] Conflicto: la skill 'docker' ya existe en .agents/skills/docker
-Sobrescribir la skill 'docker'? [y/N]: y
-[agentpack] 'docker' sobrescrita (solo archivos en conflicto).
+agentpack: conflicts detected
+agentpack: 'docker' already exists
+overwrite skill 'docker'? [y/N]: y
+agentpack: overwrote 'docker'
 ```
 
 Si respondes `n` (o Enter), la skill se ignora y no se toca.
@@ -319,11 +351,10 @@ agentpack list-skills backend-base
 Salida esperada (ejemplo):
 
 ```text
-[agentpack] Skills del paquete 'backend-base' (3):
+agentpack: skills in 'backend-base' (3)
 - docker
 - golang-api
 - testing
-[agentpack] Ruta: /home/usuario/.agentpack/packages-skills/backend-base
 ```
 
 ### 7) Eliminar una skill especifica
@@ -346,6 +377,62 @@ Simulacion sin borrar:
 agentpack remove-skill backend-base docker --dry-run
 ```
 
+### 8) Agregar archivo/carpeta a un paquete
+
+```bash
+agentpack add ./skills/docker --to backend-base
+```
+
+Salida esperada (ejemplo):
+
+```text
+agentpack: adding './skills/docker' to package 'backend-base'
+agentpack: added 'docker' to package 'backend-base'
+```
+
+### 9) Eliminar ruta interna de un paquete
+
+```bash
+agentpack remove docker/SKILL.md --from backend-base
+```
+
+Salida esperada (ejemplo):
+
+```text
+remove 'docker/SKILL.md' from package 'backend-base'? [y/N]: y
+agentpack: removing 'docker/SKILL.md' from package 'backend-base'
+agentpack: removed 'docker/SKILL.md' from package 'backend-base'
+```
+
+### 10) Cambiar idioma de salida
+
+```bash
+agentpack config set language es
+agentpack --help
+agentpack lang en
+```
+
+Salida esperada (ejemplo):
+
+```text
+agentpack: idioma actualizado a es
+...
+agentpack: language set to en
+```
+
+### 11) Renombrar un paquete
+
+```bash
+agentpack rename backend-base backend-v2
+```
+
+Salida esperada (ejemplo):
+
+```text
+agentpack: renaming package 'backend-base' to 'backend-v2'
+agentpack: package renamed from 'backend-base' to 'backend-v2'
+```
+
 ## Estructura del proyecto
 
 ```text
@@ -355,13 +442,24 @@ cmd/
 internal/
   cli/                     # comandos Cobra
     root.go
+    i18n.go
     create.go
     install.go
+    add.go
     list.go
     list_skills.go
+    rename.go
     remove.go
     remove_skill.go
+    config.go
+    lang.go
     completion.go
+  i18n/
+    messages.go            # catalogo de mensajes EN/ES
+  platform/
+    skills.go              # resolucion de destino por plataforma
+  config/
+    settings.go            # config global (~/.agentpack/config.json)
   storage/
     storage.go             # rutas de almacenamiento local
   fsutil/
@@ -396,7 +494,7 @@ go build -o agentpack ./cmd/agentpack
 
 ### Error: paquete no encontrado
 
-Si ejecutas `install`, `remove`, `list-skills` o `remove-skill` y no existe el paquete, verifica:
+Si ejecutas `install`, `add`, `remove`, `list-skills` o `remove-skill` y no existe el paquete, verifica:
 
 - nombre exacto del paquete (`agentpack list`),
 - ruta de almacenamiento `~/.agentpack/packages-skills`.
@@ -429,6 +527,12 @@ Skill especifica:
 agentpack remove-skill <nombre-paquete> <nombre-skill> --dry-run
 ```
 
+Ruta interna del paquete:
+
+```bash
+agentpack remove <ruta> --from <nombre-paquete> --dry-run
+```
+
 ### Error: skill no encontrada
 
 Si `remove-skill` falla por skill inexistente:
@@ -445,6 +549,17 @@ Si no detecta ruta de skills, crea una de estas carpetas en el proyecto:
 - `.agent/skills`
 - `skills`
 
+### Cambiar idioma de ayuda y mensajes
+
+Usa cualquiera de estas opciones:
+
+```bash
+agentpack config set language es
+agentpack lang en
+```
+
+Idioma por defecto: `en`.
+
 ### Conflictos al instalar
 
 El conflicto se resuelve por skill (carpeta). Puedes:
@@ -454,9 +569,11 @@ El conflicto se resuelve por skill (carpeta). Puedes:
 
 ## Roadmap
 
+- Consolidar la matriz de plataformas para `skills` con pruebas automatizadas por entorno.
 - Validacion opcional de `SKILL.md` (frontmatter y convenciones).
 - Comando para renombrar skills dentro de un paquete.
-- Mejoras de soporte multiplataforma (Windows/macOS).
+- Extender soporte multi-plataforma para `rules`, `commands`, `agents` y `MCP` (ademas de `skills`).
+- Mejoras de soporte multiplataforma de sistema operativo (Windows/macOS).
 - Publicacion con releases binarias en GitHub.
 
 ## Contribuciones

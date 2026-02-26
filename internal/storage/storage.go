@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+
+	"github.com/Bbeboy/AgentPack/internal/i18n"
 )
 
 var packageNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$`)
@@ -13,14 +15,16 @@ var skillNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$`)
 func PackagesRoot() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("no se pudo obtener HOME: %w", err)
+		lang := i18n.ResolveLanguage()
+		return "", fmt.Errorf(i18n.Message(lang, "storage.home", err))
 	}
 	return filepath.Join(home, ".agentpack", "packages-skills"), nil
 }
 
 func PackagePath(name string) (string, error) {
 	if !packageNamePattern.MatchString(name) {
-		return "", fmt.Errorf("nombre de paquete invalido: usa solo letras, numeros, '.', '_' o '-' (max 64 caracteres)")
+		lang := i18n.ResolveLanguage()
+		return "", fmt.Errorf(i18n.Message(lang, "storage.package.invalid"))
 	}
 
 	root, err := PackagesRoot()
@@ -38,7 +42,8 @@ func SkillPath(packageName, skillName string) (string, error) {
 	}
 
 	if !skillNamePattern.MatchString(skillName) {
-		return "", fmt.Errorf("nombre de skill invalido: usa solo letras, numeros, '.', '_' o '-' (max 64 caracteres)")
+		lang := i18n.ResolveLanguage()
+		return "", fmt.Errorf(i18n.Message(lang, "storage.skill.invalid"))
 	}
 
 	return filepath.Join(packagePath, skillName), nil

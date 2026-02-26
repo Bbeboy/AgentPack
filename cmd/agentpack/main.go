@@ -5,11 +5,13 @@ import (
 	"os"
 
 	"github.com/Bbeboy/AgentPack/internal/cli"
+	"github.com/Bbeboy/AgentPack/internal/i18n"
 )
 
 func main() {
 	if err := cli.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "[agentpack] Error: %v\n", err)
+		lang := i18n.ResolveLanguage()
+		fmt.Fprintf(os.Stderr, i18n.Message(lang, "main.error", err)+"\n")
 		os.Exit(1)
 	}
 }

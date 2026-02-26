@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/Bbeboy/AgentPack/internal/fsutil"
+	"github.com/Bbeboy/AgentPack/internal/platform"
 	"github.com/Bbeboy/AgentPack/internal/prompt"
 	"github.com/Bbeboy/AgentPack/internal/storage"
 	"github.com/spf13/cobra"
@@ -14,8 +15,8 @@ import (
 
 func newInstallCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "install <nombre-paquete>",
-		Short: "Instala un paquete de skills en el proyecto actual",
+		Use:   "install <package-name>",
+		Short: t("install.short"),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			packageName := args[0]
@@ -28,37 +29,37 @@ func newInstallCmd() *cobra.Command {
 			packageInfo, err := os.Stat(packagePath)
 			if err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("no se encontro el paquete '%s'\n[agentpack] Buscado en: %s", packageName, packagePath)
+					return fmt.Errorf(t("install.pkg.missing", packageName, packagePath))
 				}
-				return fmt.Errorf("no se pudo leer el paquete: %w", err)
+				return fmt.Errorf(t("install.pkg.read", err))
 			}
 			if !packageInfo.IsDir() {
-				return fmt.Errorf("el paquete '%s' no es un directorio valido", packageName)
+				return fmt.Errorf(t("install.pkg.notdir", packageName))
 			}
 
 			cwd, err := os.Getwd()
 			if err != nil {
-				return fmt.Errorf("no se pudo obtener el directorio actual: %w", err)
+				return fmt.Errorf(t("install.cwd", err))
 			}
 
-			destinationRoot := filepath.Join(cwd, ".agents", "skills")
+			destinationRoot, _, _, err := platform.ResolveSkillsDestination(cwd)
+			if err != nil {
+				return err
+			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Instalando paquete '%s'...\n", packageName)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Paquete: %s\n", packagePath)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Destino: %s\n", destinationRoot)
+			fmt.Fprintln(cmd.OutOrStdout(), out("install.start", packageName, destinationRoot))
 
 			if _, err := os.Stat(destinationRoot); os.IsNotExist(err) {
-				fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] La carpeta destino no existe. Creando...")
 				if err := os.MkdirAll(destinationRoot, 0o755); err != nil {
-					return fmt.Errorf("no se pudo crear la carpeta destino: %w", err)
+					return fmt.Errorf(t("install.dest.create", err))
 				}
 			} else if err != nil {
-				return fmt.Errorf("no se pudo validar la carpeta destino: %w", err)
+				return fmt.Errorf(t("install.dest.validate", err))
 			}
 
 			entries, err := os.ReadDir(packagePath)
 			if err != nil {
-				return fmt.Errorf("no se pudo listar el contenido del paquete: %w", err)
+				return fmt.Errorf(t("install.list", err))
 			}
 
 			installed := 0
@@ -69,7 +70,7 @@ func newInstallCmd() *cobra.Command {
 			skills := make([]os.DirEntry, 0)
 			for _, entry := range entries {
 				if !entry.IsDir() {
-					fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Aviso: se ignora '%s' porque no es una carpeta de skill.\n", entry.Name())
+					fmt.Fprintln(cmd.OutOrStdout(), out("install.skip.non.dir", entry.Name()))
 					continue
 				}
 
@@ -78,14 +79,14 @@ func newInstallCmd() *cobra.Command {
 				if _, err := os.Stat(target); err == nil {
 					conflicts = append(conflicts, entry.Name())
 				} else if !os.IsNotExist(err) {
-					return fmt.Errorf("no se pudo revisar conflicto para '%s': %w", entry.Name(), err)
+					return fmt.Errorf(t("install.conflict.check", entry.Name(), err))
 				}
 			}
 
 			if len(conflicts) > 0 {
-				fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] Detectando conflictos...")
+				fmt.Fprintln(cmd.OutOrStdout(), out("install.conflict.title"))
 				for _, conflict := range conflicts {
-					fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Conflicto: la skill '%s' ya existe en .agents/skills/%s\n", conflict, conflict)
+					fmt.Fprintln(cmd.OutOrStdout(), out("install.conflict.item", conflict))
 				}
 			}
 
@@ -97,47 +98,44 @@ func newInstallCmd() *cobra.Command {
 				targetInfo, statErr := os.Stat(targetSkillPath)
 				targetExists := statErr == nil
 				if statErr != nil && !os.IsNotExist(statErr) {
-					return fmt.Errorf("no se pudo revisar la skill destino '%s': %w", skill.Name(), statErr)
+					return fmt.Errorf(t("install.target.check", skill.Name(), statErr))
 				}
 
 				if targetExists {
-					overwrite, err := prompt.YesNo(reader, cmd.OutOrStdout(), fmt.Sprintf("Sobrescribir la skill '%s'?", skill.Name()))
+					overwrite, err := prompt.YesNo(reader, cmd.OutOrStdout(), t("install.overwrite.ask", skill.Name()))
 					if err != nil {
 						return err
 					}
 					if !overwrite {
 						skipped++
-						fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] '%s' ignorada.\n", skill.Name())
+						fmt.Fprintln(cmd.OutOrStdout(), out("install.skip.skill", skill.Name()))
 						continue
 					}
 
 					if targetInfo.IsDir() {
 						if err := fsutil.MergeDir(sourceSkillPath, targetSkillPath); err != nil {
-							return fmt.Errorf("no se pudo sobrescribir la skill '%s': %w", skill.Name(), err)
+							return fmt.Errorf(t("install.overwrite.fail", skill.Name(), err))
 						}
 					} else {
 						if err := os.Remove(targetSkillPath); err != nil {
-							return fmt.Errorf("no se pudo reemplazar '%s': %w", skill.Name(), err)
+							return fmt.Errorf(t("install.replace.fail", skill.Name(), err))
 						}
 						if err := fsutil.CopyDir(sourceSkillPath, targetSkillPath); err != nil {
-							return fmt.Errorf("no se pudo sobrescribir la skill '%s': %w", skill.Name(), err)
+							return fmt.Errorf(t("install.overwrite.fail", skill.Name(), err))
 						}
 					}
 					overwritten++
-					fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] '%s' sobrescrita (solo archivos en conflicto).\n", skill.Name())
+					fmt.Fprintln(cmd.OutOrStdout(), out("install.overwrite", skill.Name()))
 					continue
 				}
 
 				if err := fsutil.CopyDir(sourceSkillPath, targetSkillPath); err != nil {
-					return fmt.Errorf("no se pudo instalar la skill '%s': %w", skill.Name(), err)
+					return fmt.Errorf(t("install.skill.fail", skill.Name(), err))
 				}
 				installed++
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Instaladas: %d\n", installed)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Sobrescritas: %d\n", overwritten)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Ignoradas: %d\n", skipped)
-			fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] Listo.")
+			fmt.Fprintln(cmd.OutOrStdout(), out("install.summary", installed, overwritten, skipped))
 			return nil
 		},
 	}

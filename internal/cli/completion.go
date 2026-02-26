@@ -9,7 +9,7 @@ import (
 func newCompletionCmd(root *cobra.Command) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                   "completion [bash|zsh|fish|powershell]",
-		Short:                 "Genera script de autocompletado",
+		Short:                 t("completion.short"),
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 		Args:                  cobra.ExactValidArgs(1),
@@ -24,13 +24,12 @@ func newCompletionCmd(root *cobra.Command) *cobra.Command {
 			case "powershell":
 				return root.GenPowerShellCompletionWithDesc(cmd.OutOrStdout())
 			default:
-				return fmt.Errorf("shell no soportado: %s", args[0])
+				return fmt.Errorf(t("completion.shell.unsupported", args[0]))
 			}
 		},
 	}
 
-	cmd.Long = `Para fish:
-  agentpack completion fish > ~/.config/fish/completions/agentpack.fish`
+	cmd.Long = t("completion.long")
 
 	return cmd
 }

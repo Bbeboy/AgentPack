@@ -4,7 +4,7 @@ import "github.com/spf13/cobra"
 
 var rootCmd = &cobra.Command{
 	Use:          "agentpack",
-	Short:        "Gestiona paquetes de skills para agentes de IA",
+	Short:        t("root.short"),
 	SilenceUsage: true,
 }
 
@@ -17,7 +17,11 @@ func init() {
 	rootCmd.AddCommand(newInstallCmd())
 	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newListSkillsCmd())
+	rootCmd.AddCommand(newRenameCmd())
 	rootCmd.AddCommand(newRemoveCmd())
 	rootCmd.AddCommand(newRemoveSkillCmd())
+	rootCmd.AddCommand(newAddCmd())
+	rootCmd.AddCommand(newConfigCmd())
+	rootCmd.AddCommand(newLangCmd())
 	rootCmd.AddCommand(newCompletionCmd(rootCmd))
 }

@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Bbeboy/AgentPack/internal/fsutil"
+	"github.com/Bbeboy/AgentPack/internal/platform"
 	"github.com/Bbeboy/AgentPack/internal/prompt"
 	"github.com/Bbeboy/AgentPack/internal/storage"
 	"github.com/spf13/cobra"
@@ -14,8 +16,8 @@ import (
 
 func newCreateCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "create <nombre-paquete> <ruta-skills>",
-		Short: "Crea un paquete de skills desde una ruta",
+		Use:   "create <package-name> <skills-path>",
+		Short: t("create.short"),
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			packageName := args[0]
@@ -28,18 +30,18 @@ func newCreateCmd() *cobra.Command {
 
 			sourcePath, err = filepath.Abs(sourcePath)
 			if err != nil {
-				return fmt.Errorf("no se pudo resolver la ruta origen: %w", err)
+				return fmt.Errorf(t("create.path.resolve", err))
 			}
 
 			sourceInfo, err := os.Stat(sourcePath)
 			if err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("la ruta origen no existe: %s", sourcePath)
+					return fmt.Errorf(t("create.source.missing", sourcePath))
 				}
-				return fmt.Errorf("no se pudo leer la ruta origen: %w", err)
+				return fmt.Errorf(t("add.source.read", err))
 			}
 			if !sourceInfo.IsDir() {
-				return fmt.Errorf("la ruta origen no es un directorio: %s", sourcePath)
+				return fmt.Errorf(t("create.source.notdir", sourcePath))
 			}
 
 			packagesRoot, err := storage.PackagesRoot()
@@ -48,7 +50,7 @@ func newCreateCmd() *cobra.Command {
 			}
 
 			if err := os.MkdirAll(packagesRoot, 0o755); err != nil {
-				return fmt.Errorf("no se pudo crear el directorio base de paquetes: %w", err)
+				return fmt.Errorf(t("create.root.create", err))
 			}
 
 			packagePath, err := storage.PackagePath(packageName)
@@ -56,13 +58,13 @@ func newCreateCmd() *cobra.Command {
 				return err
 			}
 			if _, err := os.Stat(packagePath); err == nil {
-				return fmt.Errorf("ya existe un paquete con el nombre '%s'", packageName)
+				return fmt.Errorf(t("create.exists", packageName))
 			} else if !os.IsNotExist(err) {
-				return fmt.Errorf("no se pudo validar el paquete destino: %w", err)
+				return fmt.Errorf(t("create.dest.validate", err))
 			}
 
 			if err := os.MkdirAll(packagePath, 0o755); err != nil {
-				return fmt.Errorf("no se pudo crear el directorio del paquete: %w", err)
+				return fmt.Errorf(t("create.dest.create", err))
 			}
 
 			created := true
@@ -72,19 +74,15 @@ func newCreateCmd() *cobra.Command {
 				}
 			}()
 
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Creando paquete '%s'...\n", packageName)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Origen: %s\n", sourcePath)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Destino: %s\n", packagePath)
-			fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] Copiando skills...")
+			fmt.Fprintln(cmd.OutOrStdout(), out("create.start", packageName))
 
 			if err := fsutil.CopyDirContents(sourcePath, packagePath); err != nil {
-				return fmt.Errorf("no se pudo copiar el contenido de skills: %w", err)
+				return fmt.Errorf(t("create.copy", err))
 			}
 
 			created = false
 
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Listo. Paquete creado: %s\n", packageName)
-			fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Ruta: %s\n", packagePath)
+			fmt.Fprintln(cmd.OutOrStdout(), out("create.done", packagePath))
 			return nil
 		},
 	}
@@ -97,15 +95,10 @@ func resolveCreateSource(sourceArg string, cmd *cobra.Command) (string, error) {
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", fmt.Errorf("no se pudo obtener el directorio actual: %w", err)
+		return "", fmt.Errorf(t("create.cwd", err))
 	}
 
-	candidates := []string{
-		".agents/skills",
-		".opencode/skills",
-		".agent/skills",
-		"skills",
-	}
+	candidates := platform.CandidateSkillsPaths()
 
 	found := make([]string, 0, len(candidates))
 	for _, rel := range candidates {
@@ -115,7 +108,7 @@ func resolveCreateSource(sourceArg string, cmd *cobra.Command) (string, error) {
 			if os.IsNotExist(err) {
 				continue
 			}
-			return "", fmt.Errorf("no se pudo revisar la ruta candidata '%s': %w", rel, err)
+			return "", fmt.Errorf(t("create.candidate.check", rel, err))
 		}
 		if info.IsDir() {
 			found = append(found, rel)
@@ -123,16 +116,16 @@ func resolveCreateSource(sourceArg string, cmd *cobra.Command) (string, error) {
 	}
 
 	if len(found) == 0 {
-		return "", fmt.Errorf("con '.' no se encontro ninguna carpeta de skills en este proyecto (buscado: .agents/skills, .opencode/skills, .agent/skills, skills)")
+		return "", fmt.Errorf(t("create.no.candidates", strings.Join(candidates, ", ")))
 	}
 
 	if len(found) == 1 {
 		selected := filepath.Join(cwd, found[0])
-		fmt.Fprintf(cmd.OutOrStdout(), "[agentpack] Carpeta detectada automaticamente: %s\n", found[0])
+		fmt.Fprintln(cmd.OutOrStdout(), out("create.detected", found[0]))
 		return selected, nil
 	}
 
-	fmt.Fprintln(cmd.OutOrStdout(), "[agentpack] Se encontraron multiples carpetas de skills:")
+	fmt.Fprintln(cmd.OutOrStdout(), out("create.multiple"))
 	for i, option := range found {
 		fmt.Fprintf(cmd.OutOrStdout(), "  %d) %s\n", i+1, option)
 	}
