@@ -30,6 +30,20 @@ go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
 agentpack --help
 ```
 
+If `agentpack` is resolved from `~/.local/bin` in your `PATH`, install directly there to avoid stale binaries:
+
+```bash
+GOBIN="$HOME/.local/bin" go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
+agentpack version
+```
+
+To verify which binary is being executed:
+
+```bash
+which -a agentpack
+agentpack version
+```
+
 From source:
 
 ```bash
@@ -113,6 +127,7 @@ GitHub Copilot detection uses `.github/skills` (not just `.github`) to avoid fal
 | `agentpack remove-skill <package-name> <skill-name>` | Remove one skill folder from package. | `agentpack remove-skill backend-base docker` |
 | `agentpack config set language <en\|es>` | Set global CLI language. | `agentpack config set language es` |
 | `agentpack lang <en\|es>` | Language shortcut command. | `agentpack lang en` |
+| `agentpack version` | Show installed CLI version. | `agentpack version` |
 | `agentpack completion [bash\|zsh\|fish\|powershell]` | Generate shell completion script. | `agentpack completion fish` |
 
 ## Language
@@ -199,6 +214,16 @@ internal/
 
 - Confirm binary exists in `~/.local/bin/agentpack` or your `GOBIN`.
 - Confirm that directory is in `PATH`.
+
+### Unexpected old output after reinstall
+
+If output still shows old messages, you likely have multiple binaries installed:
+
+```bash
+which -a agentpack
+GOBIN="$HOME/.local/bin" go install ./cmd/agentpack
+agentpack version
+```
 
 ### Package not found
 

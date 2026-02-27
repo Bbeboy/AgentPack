@@ -23,5 +23,6 @@ func init() {
 	rootCmd.AddCommand(newAddCmd())
 	rootCmd.AddCommand(newConfigCmd())
 	rootCmd.AddCommand(newLangCmd())
+	rootCmd.AddCommand(newVersionCmd())
 	rootCmd.AddCommand(newCompletionCmd(rootCmd))
 }
