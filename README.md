@@ -587,6 +587,8 @@ Flujo recomendado:
 3. Ejecuta `go fmt ./...` y `go test ./...`.
 4. Abre un Pull Request con descripcion clara.
 
+Nota: el workflow de CI en `.github/workflows/test.yml` ejecuta `go test ./...` en push/PR.
+
 ## Licencia
 
 Este proyecto esta bajo licencia MIT. Revisa el archivo `LICENSE`.
