@@ -7,8 +7,9 @@ import (
 )
 
 type Candidate struct {
-	Name string
-	Root string
+	Name             string
+	Root             string
+	RequireSkillsDir bool
 }
 
 var skillCandidates = []Candidate{
@@ -27,7 +28,7 @@ var skillCandidates = []Candidate{
 	{Name: "Crush", Root: ".config/crush"},
 	{Name: "Cursor", Root: ".cursor"},
 	{Name: "Factory AI", Root: ".factory"},
-	{Name: "GitHub Copilot", Root: ".github"},
+	{Name: "GitHub Copilot", Root: ".github", RequireSkillsDir: true},
 	{Name: "Goose", Root: ".goose"},
 	{Name: "iFlow CLI", Root: ".iflow"},
 	{Name: "Junie", Root: ".junie"},
@@ -69,6 +70,22 @@ func CandidateSkillsPaths() []string {
 func ResolveSkillsDestination(cwd string) (path string, platform string, detected bool, err error) {
 	for _, c := range skillCandidates {
 		root := filepath.Join(cwd, filepath.FromSlash(c.Root))
+
+		if c.RequireSkillsDir {
+			skillsDir := filepath.Join(root, "skills")
+			info, statErr := os.Stat(skillsDir)
+			if statErr != nil {
+				if os.IsNotExist(statErr) {
+					continue
+				}
+				return "", "", false, fmt.Errorf("could not inspect platform skills path '%s': %w", filepath.ToSlash(filepath.Join(c.Root, "skills")), statErr)
+			}
+			if info.IsDir() {
+				return skillsDir, c.Name, true, nil
+			}
+			continue
+		}
+
 		info, statErr := os.Stat(root)
 		if statErr != nil {
 			if os.IsNotExist(statErr) {

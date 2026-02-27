@@ -68,3 +68,51 @@ func TestResolveSkillsDestinationFallsBackToAgents(t *testing.T) {
 		t.Fatal("expected detected=false for fallback")
 	}
 }
+
+func TestResolveSkillsDestinationIgnoresGithubRootWithoutSkills(t *testing.T) {
+	projectRoot := t.TempDir()
+
+	if err := os.MkdirAll(filepath.Join(projectRoot, ".github"), 0o755); err != nil {
+		t.Fatalf("could not create .github: %v", err)
+	}
+
+	path, platformName, detected, err := ResolveSkillsDestination(projectRoot)
+	if err != nil {
+		t.Fatalf("ResolveSkillsDestination returned error: %v", err)
+	}
+
+	expected := filepath.Join(projectRoot, ".agents", "skills")
+	if path != expected {
+		t.Fatalf("expected fallback %q, got %q", expected, path)
+	}
+	if platformName != "Amp" {
+		t.Fatalf("expected fallback platform Amp, got %q", platformName)
+	}
+	if detected {
+		t.Fatal("expected detected=false when only .github root exists")
+	}
+}
+
+func TestResolveSkillsDestinationUsesGithubWhenSkillsExists(t *testing.T) {
+	projectRoot := t.TempDir()
+
+	if err := os.MkdirAll(filepath.Join(projectRoot, ".github", "skills"), 0o755); err != nil {
+		t.Fatalf("could not create .github/skills: %v", err)
+	}
+
+	path, platformName, detected, err := ResolveSkillsDestination(projectRoot)
+	if err != nil {
+		t.Fatalf("ResolveSkillsDestination returned error: %v", err)
+	}
+
+	expected := filepath.Join(projectRoot, ".github", "skills")
+	if path != expected {
+		t.Fatalf("expected %q, got %q", expected, path)
+	}
+	if platformName != "GitHub Copilot" {
+		t.Fatalf("expected GitHub Copilot, got %q", platformName)
+	}
+	if !detected {
+		t.Fatal("expected detected=true for .github/skills")
+	}
+}

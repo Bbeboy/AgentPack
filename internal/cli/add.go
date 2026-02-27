@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Bbeboy/AgentPack/internal/fsutil"
 	"github.com/Bbeboy/AgentPack/internal/storage"
@@ -49,7 +50,12 @@ func newAddCmd() *cobra.Command {
 				return fmt.Errorf(t("add.package.notdir", toPackage))
 			}
 
-			targetPath := filepath.Join(packagePath, filepath.Base(sourcePath))
+			destinationRel, err := resolveAddDestinationRelative(sourceArg, sourcePath)
+			if err != nil {
+				return err
+			}
+
+			targetPath := filepath.Join(packagePath, destinationRel)
 			fmt.Fprintln(cmd.OutOrStdout(), out("add.start", sourceArg, toPackage))
 
 			if sourceInfo.IsDir() {
@@ -62,7 +68,7 @@ func newAddCmd() *cobra.Command {
 				}
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), out("add.done", filepath.Base(sourceArg), toPackage))
+			fmt.Fprintln(cmd.OutOrStdout(), out("add.done", filepath.ToSlash(destinationRel), toPackage))
 			return nil
 		},
 	}
@@ -127,4 +133,38 @@ func addFile(sourcePath string, targetPath string) error {
 	}
 
 	return out.Close()
+}
+
+func resolveAddDestinationRelative(sourceArg string, sourcePath string) (string, error) {
+	if filepath.IsAbs(sourceArg) {
+		cwd, err := os.Getwd()
+		if err == nil {
+			rel, relErr := filepath.Rel(cwd, sourcePath)
+			if relErr == nil {
+				clean, cleanErr := cleanAddRelativePath(rel)
+				if cleanErr == nil {
+					return clean, nil
+				}
+			}
+		}
+		return filepath.Base(sourcePath), nil
+	}
+
+	return cleanAddRelativePath(sourceArg)
+}
+
+func cleanAddRelativePath(value string) (string, error) {
+	if strings.TrimSpace(value) == "" {
+		return "", fmt.Errorf(t("add.path.empty"))
+	}
+
+	clean := filepath.Clean(value)
+	if clean == "." {
+		return "", fmt.Errorf(t("add.path.empty"))
+	}
+	if clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf(t("add.path.escape", value))
+	}
+
+	return clean, nil
 }
