@@ -34,14 +34,14 @@ If `agentpack` is resolved from `~/.local/bin` in your `PATH`, install directly 
 
 ```bash
 GOBIN="$HOME/.local/bin" go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
-agentpack version
+agentpack -v
 ```
 
 To verify which binary is being executed:
 
 ```bash
 which -a agentpack
-agentpack version
+agentpack -v
 ```
 
 From source:
@@ -127,6 +127,7 @@ GitHub Copilot detection uses `.github/skills` (not just `.github`) to avoid fal
 | `agentpack remove-skill <package-name> <skill-name>` | Remove one skill folder from package. | `agentpack remove-skill backend-base docker` |
 | `agentpack config set language <en\|es>` | Set global CLI language. | `agentpack config set language es` |
 | `agentpack lang <en\|es>` | Language shortcut command. | `agentpack lang en` |
+| `agentpack -v` | Show installed CLI version (short flag). | `agentpack -v` |
 | `agentpack version` | Show installed CLI version. | `agentpack version` |
 | `agentpack completion [bash\|zsh\|fish\|powershell]` | Generate shell completion script. | `agentpack completion fish` |
 
@@ -222,8 +223,28 @@ If output still shows old messages, you likely have multiple binaries installed:
 ```bash
 which -a agentpack
 GOBIN="$HOME/.local/bin" go install ./cmd/agentpack
-agentpack version
+agentpack -v
 ```
+
+## Binary Versioning Plan (No Go Required)
+
+To make installation direct (without `go install`), we can implement this phased release pipeline:
+
+1. **Tag-based versioning**
+   - Use semantic tags like `v0.2.0`.
+   - Build binaries with injected metadata (`version`, `commit`, `date`) via `-ldflags`.
+
+2. **GitHub Releases artifacts**
+   - Build matrix: `linux`, `darwin`, `windows` x `amd64`, `arm64`.
+   - Publish `.tar.gz` / `.zip` artifacts + `checksums.txt`.
+
+3. **Install script**
+   - Provide `install.sh` that detects OS/ARCH and downloads the correct release binary.
+   - Keep a one-liner install flow for users without Go.
+
+4. **Package managers (optional next step)**
+   - Homebrew tap (macOS/Linux), Scoop/winget (Windows).
+   - Reuse same GitHub Release artifacts as source of truth.
 
 ### Package not found
 
