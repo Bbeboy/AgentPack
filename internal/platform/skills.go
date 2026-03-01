@@ -25,7 +25,7 @@ var skillCandidates = []Candidate{
 	{Name: "Codex CLI", Root: ".codex"},
 	{Name: "Command Code", Root: ".commandcode"},
 	{Name: "Continue", Root: ".continue"},
-	{Name: "Crush", Root: ".config/crush"},
+	{Name: "Crush", Root: filepath.Join(".config", "crush")},
 	{Name: "Cursor", Root: ".cursor"},
 	{Name: "Factory AI", Root: ".factory"},
 	{Name: "GitHub Copilot", Root: ".github", RequireSkillsDir: true},
@@ -61,7 +61,7 @@ func Candidates() []Candidate {
 func CandidateSkillsPaths() []string {
 	paths := make([]string, 0, len(skillCandidates)+1)
 	for _, c := range skillCandidates {
-		paths = append(paths, filepath.ToSlash(filepath.Join(c.Root, "skills")))
+		paths = append(paths, filepath.Join(c.Root, "skills"))
 	}
 	paths = append(paths, "skills")
 	return paths
@@ -78,7 +78,7 @@ func ResolveSkillsDestination(cwd string) (path string, platform string, detecte
 				if os.IsNotExist(statErr) {
 					continue
 				}
-				return "", "", false, fmt.Errorf("could not inspect platform skills path '%s': %w", filepath.ToSlash(filepath.Join(c.Root, "skills")), statErr)
+				return "", "", false, fmt.Errorf("could not inspect platform skills path '%s': %w", filepath.Join(c.Root, "skills"), statErr)
 			}
 			if info.IsDir() {
 				return skillsDir, c.Name, true, nil

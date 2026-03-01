@@ -27,7 +27,7 @@ func newRemoveCmd() *cobra.Command {
 				return removePathFromPackage(cmd, fromPackage, target, force, dryRun)
 			}
 
-			if strings.Contains(target, string(filepath.Separator)) || strings.Contains(target, "/") {
+			if containsPathSeparator(target) {
 				return fmt.Errorf(t("remove.from.required"))
 			}
 
@@ -142,11 +142,12 @@ func validateRelativePath(value string) (string, error) {
 	if strings.TrimSpace(value) == "" {
 		return "", fmt.Errorf(t("remove.path.empty"))
 	}
-	if filepath.IsAbs(value) {
+	normalized := normalizePathSeparators(value)
+	if filepath.IsAbs(normalized) {
 		return "", fmt.Errorf(t("remove.path.absolute"))
 	}
 
-	clean := filepath.Clean(value)
+	clean := filepath.Clean(normalized)
 	if clean == "." {
 		return "", fmt.Errorf(t("remove.path.empty"))
 	}

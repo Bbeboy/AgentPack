@@ -10,7 +10,7 @@ import (
 )
 
 func TestValidateRelativePath(t *testing.T) {
-	absPath := filepath.Join(string(filepath.Separator), "tmp", "file")
+	absPath := filepath.Join(string(os.PathSeparator), "tmp", "file")
 
 	tests := []struct {
 		name      string
@@ -41,6 +41,14 @@ func TestValidateRelativePath(t *testing.T) {
 				t.Fatalf("expected clean path %q, got %q", tc.wantClean, got)
 			}
 		})
+	}
+}
+
+func TestValidateRelativePathRejectsWindowsStyleTraversal(t *testing.T) {
+	setupCLITest(t)
+
+	if _, err := validateRelativePath("..\\secret"); err == nil {
+		t.Fatal("expected error for windows-style traversal path")
 	}
 }
 
@@ -90,5 +98,17 @@ func TestRemoveCommandRequiresFromForPathTarget(t *testing.T) {
 	err := cmd.Execute()
 	if err == nil {
 		t.Fatal("expected error for path target without --from")
+	}
+}
+
+func TestRemoveCommandRequiresFromForWindowsStylePathTarget(t *testing.T) {
+	setupCLITest(t)
+
+	cmd := newRemoveCmd()
+	cmd.SetArgs([]string{"docker\\SKILL.md"})
+
+	err := cmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for windows-style path target without --from")
 	}
 }

@@ -12,8 +12,8 @@ func TestCandidateSkillsPathsIncludesFallback(t *testing.T) {
 		t.Fatal("expected candidate paths")
 	}
 
-	if paths[0] != ".opencode/skills" {
-		t.Fatalf("expected first candidate to be .opencode/skills, got %q", paths[0])
+	if paths[0] != filepath.Join(".opencode", "skills") {
+		t.Fatalf("expected first candidate to be %q, got %q", filepath.Join(".opencode", "skills"), paths[0])
 	}
 
 	last := paths[len(paths)-1]

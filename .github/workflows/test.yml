@@ -9,6 +9,7 @@ on:
 
 jobs:
   go-test:
+    name: go-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -21,3 +22,25 @@ jobs:
 
       - name: Run unit and component tests
         run: go test ./...
+
+  cross-build:
+    name: cross-build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Cross-compile cmd/agentpack for ${{ matrix.goos }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: amd64
+        run: go build ./cmd/agentpack

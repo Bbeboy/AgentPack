@@ -10,7 +10,8 @@ Spanish documentation is available at `README.es.md`.
 - Auto-detect source folder when using `.`.
 - Install into detected platform skills directory (for example `.opencode/skills`, `.agents/skills`, `.cla/skills`).
 - Handle skill conflicts interactively during install.
-- Add paths into an existing package with `add`.
+- Add paths into an existing package with `add-skill`.
+- Export package content to a flat folder in your current directory with `export`.
 - Remove a package path with `remove <path> --from <package>`.
 - Rename packages with `rename`.
 - CLI output and help in English or Spanish (`config set language`, `lang`).
@@ -18,12 +19,19 @@ Spanish documentation is available at `README.es.md`.
 
 ## Requirements
 
-- Go `1.23+`
-- Linux (current support)
+- Go `1.23+` (for source builds)
+- Official CLI support: Linux, macOS, Windows
 
 ## Install
 
-Recommended:
+Recommended (precompiled binaries):
+
+1. Open GitHub Releases: `https://github.com/Bbeboy/AgentPack/releases`
+2. Download your OS binary (`windows`, `darwin`, or `linux`)
+3. Add it to your `PATH` as `agentpack` (`agentpack.exe` on Windows)
+4. Verify with `agentpack --help`
+
+Alternative (`go install`):
 
 ```bash
 go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
@@ -68,12 +76,15 @@ agentpack list
 agentpack install backend-base
 
 # 4) add a new path into package
-agentpack add ./skills/docker --to backend-base
+agentpack add-skill ./skills/docker --to backend-base
 
-# 5) remove path from package
+# 5) export package to ./backend-base
+agentpack export backend-base
+
+# 6) remove path from package
 agentpack remove docker/SKILL.md --from backend-base
 
-# 6) rename package
+# 7) rename package
 agentpack rename backend-base backend-v2
 ```
 
@@ -118,7 +129,9 @@ GitHub Copilot detection uses `.github/skills` (not just `.github`) to avoid fal
 | --- | --- | --- |
 | `agentpack create <package-name> <skills-path>` | Create package from a skills path. | `agentpack create backend-base .` |
 | `agentpack install <package-name>` | Install package into detected platform skills destination. | `agentpack install backend-base` |
-| `agentpack add <file-or-folder> --to <package-name>` | Add a file/folder to an existing package. | `agentpack add ./skills/docker --to backend-base` |
+| `agentpack add-skill <file-or-folder> --to <package-name>` | Add a file/folder to an existing package. | `agentpack add-skill ./skills/docker --to backend-base` |
+| `agentpack export <package-name>` | Export package content to `./<package-name>` in current directory. | `agentpack export backend-base` |
+| `agentpack add` | Deprecated legacy command; exits with error and guidance to use `add-skill`. | `agentpack add ...` |
 | `agentpack list` | List saved packages. | `agentpack list` |
 | `agentpack list-skills <package-name>` | List skills inside a package. | `agentpack list-skills backend-base` |
 | `agentpack rename <current-name> <new-name>` | Rename an existing package. | `agentpack rename backend-base backend-v2` |
@@ -179,6 +192,16 @@ go build -o agentpack ./cmd/agentpack
 ```bash
 go test ./...
 ```
+
+Cross-compilation checks run in CI from `ubuntu-latest` for `GOOS=linux`, `GOOS=darwin`, and `GOOS=windows`.
+
+### Branch Protection (manual setup)
+
+GitHub branch protection must be configured in repository settings for `main`:
+
+1. Enable `Require a pull request before merging`.
+2. Enable `Require status checks to pass before merging`.
+3. Select required checks from `.github/workflows/test.yml` (at minimum `go-test` and `cross-build`).
 
 ## Project Structure
 
@@ -248,7 +271,7 @@ To make installation direct (without `go install`), we can implement this phased
 
 ### Package not found
 
-If `install`, `add`, `remove`, `list-skills`, or `remove-skill` reports package not found, verify:
+If `install`, `add-skill`, `export`, `remove`, `list-skills`, or `remove-skill` reports package not found, verify:
 
 - exact package name (`agentpack list`)
 - storage path `~/.agentpack/packages-skills`

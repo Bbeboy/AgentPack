@@ -10,9 +10,10 @@ import (
 var rootShowVersion bool
 
 var rootCmd = &cobra.Command{
-	Use:          "agentpack",
-	Short:        t("root.short"),
-	SilenceUsage: true,
+	Use:           "agentpack",
+	Short:         t("root.short"),
+	SilenceErrors: true,
+	SilenceUsage:  true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if rootShowVersion {
 			fmt.Fprintln(cmd.OutOrStdout(), out("version.output", version.Value()))
@@ -31,12 +32,14 @@ func init() {
 
 	rootCmd.AddCommand(newCreateCmd())
 	rootCmd.AddCommand(newInstallCmd())
+	rootCmd.AddCommand(newExportCmd())
 	rootCmd.AddCommand(newListCmd())
 	rootCmd.AddCommand(newListSkillsCmd())
 	rootCmd.AddCommand(newRenameCmd())
 	rootCmd.AddCommand(newRemoveCmd())
 	rootCmd.AddCommand(newRemoveSkillCmd())
 	rootCmd.AddCommand(newAddCmd())
+	rootCmd.AddCommand(newLegacyAddCmd())
 	rootCmd.AddCommand(newConfigCmd())
 	rootCmd.AddCommand(newLangCmd())
 	rootCmd.AddCommand(newVersionCmd())

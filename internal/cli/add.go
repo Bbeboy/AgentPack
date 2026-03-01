@@ -16,8 +16,8 @@ func newAddCmd() *cobra.Command {
 	var toPackage string
 
 	cmd := &cobra.Command{
-		Use:   "add <file-or-folder>",
-		Short: t("add.short"),
+		Use:   "add-skill <file-or-folder>",
+		Short: t("addskill.short"),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sourceArg := args[0]
@@ -68,7 +68,7 @@ func newAddCmd() *cobra.Command {
 				}
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), out("add.done", filepath.ToSlash(destinationRel), toPackage))
+			fmt.Fprintln(cmd.OutOrStdout(), out("add.done", destinationRel, toPackage))
 			return nil
 		},
 	}
@@ -158,7 +158,8 @@ func cleanAddRelativePath(value string) (string, error) {
 		return "", fmt.Errorf(t("add.path.empty"))
 	}
 
-	clean := filepath.Clean(value)
+	normalized := normalizePathSeparators(value)
+	clean := filepath.Clean(normalized)
 	if clean == "." {
 		return "", fmt.Errorf(t("add.path.empty"))
 	}

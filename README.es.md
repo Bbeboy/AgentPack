@@ -13,7 +13,8 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
 - Mantiene archivos existentes que no estan en conflicto.
 - Permite borrar paquetes con confirmacion o de forma forzada.
 - Permite eliminar rutas internas de un paquete con `remove <ruta> --from <paquete>`.
-- Permite agregar archivos o carpetas a un paquete con `add <ruta> --to <paquete>`.
+- Permite agregar archivos o carpetas a un paquete con `add-skill <ruta> --to <paquete>`.
+- Permite exportar un paquete a `./<paquete>` con `export <paquete>`.
 - Permite listar skills por paquete y eliminar una skill especifica.
 - Soporta idioma EN/ES para ayuda y feedback (`config set language` o `lang`).
 - Incluye modo seguro `--dry-run` para revisar borrados sin ejecutar.
@@ -24,7 +25,8 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
 - [Instalacion express (2 minutos)](#instalacion-express-2-minutos)
 - [Requisitos](#requisitos)
 - [Instalacion](#instalacion)
-  - [Opcion recomendada: go install](#opcion-recomendada-go-install)
+  - [Opcion recomendada: binarios precompilados (GitHub Releases)](#opcion-recomendada-binarios-precompilados-github-releases)
+  - [Opcion alternativa: go install](#opcion-alternativa-go-install)
   - [Si agentpack no aparece en PATH](#si-agentpack-no-aparece-en-path)
   - [Opcion 2: build desde fuente](#opcion-2-build-desde-fuente)
   - [Autocompletado](#autocompletado)
@@ -52,14 +54,25 @@ Si `agentpack` no se encuentra, revisa la seccion [Si agentpack no aparece en PA
 
 ## Requisitos
 
-- Go `1.23+`
-- Linux (soporte actual)
+- Go `1.23+` (para compilar desde fuente)
+- Compatibilidad oficial del CLI: Linux, macOS y Windows
 
-Nota: el codigo ya usa `filepath` y `os.UserHomeDir`, por lo que esta preparado para evolucionar a multiplataforma.
+Nota: la base de codigo usa `path/filepath` para operaciones de rutas y mantiene portabilidad entre sistemas operativos.
 
 ## Instalacion
 
-### Opcion recomendada: go install
+### Opcion recomendada: binarios precompilados (GitHub Releases)
+
+1. Abre `https://github.com/Bbeboy/AgentPack/releases`
+2. Descarga el binario para tu SO (`windows`, `darwin` o `linux`)
+3. Agrega el binario al `PATH` con nombre `agentpack` (`agentpack.exe` en Windows)
+4. Verifica con:
+
+```bash
+agentpack --help
+```
+
+### Opcion alternativa: go install
 
 ```bash
 go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest
@@ -178,23 +191,29 @@ agentpack remove-skill backend-base docker
 7. Agregar archivo o carpeta a un paquete:
 
 ```bash
-agentpack add ./mi-nueva-skill --to backend-base
+agentpack add-skill ./mi-nueva-skill --to backend-base
 ```
 
-8. Eliminar ruta interna de un paquete:
+8. Exportar un paquete a la carpeta actual:
+
+```bash
+agentpack export backend-base
+```
+
+9. Eliminar ruta interna de un paquete:
 
 ```bash
 agentpack remove docker/SKILL.md --from backend-base
 ```
 
-9. Cambiar idioma de salida:
+10. Cambiar idioma de salida:
 
 ```bash
 agentpack config set language es
 agentpack lang en
 ```
 
-10. Renombrar un paquete:
+11. Renombrar un paquete:
 
 ```bash
 agentpack rename backend-base backend-v2
@@ -251,7 +270,9 @@ Ejemplos validos:
 | --- | --- | --- |
 | `agentpack create <nombre-paquete> <ruta-skills>` | Crea un paquete desde una ruta de skills. | `agentpack create backend-base /mi/proyecto/.agents/skills` |
 | `agentpack install <nombre-paquete>` | Instala un paquete en la carpeta `skills` de la plataforma detectada (fallback `.agents/skills`). | `agentpack install backend-base` |
-| `agentpack add <archivo-o-carpeta> --to <nombre-paquete>` | Agrega un archivo o carpeta a un paquete existente. | `agentpack add ./nueva-skill --to backend-base` |
+| `agentpack add-skill <archivo-o-carpeta> --to <nombre-paquete>` | Agrega un archivo o carpeta a un paquete existente. | `agentpack add-skill ./nueva-skill --to backend-base` |
+| `agentpack export <nombre-paquete>` | Exporta el contenido del paquete en `./<nombre-paquete>` dentro del directorio actual. | `agentpack export backend-base` |
+| `agentpack add` | Comando obsoleto; finaliza con error e indica usar `add-skill`. | `agentpack add ...` |
 | `agentpack list` | Lista paquetes guardados localmente. | `agentpack list` |
 | `agentpack list-skills <nombre-paquete>` | Lista las skills dentro de un paquete. | `agentpack list-skills backend-base` |
 | `agentpack rename <nombre-actual> <nombre-nuevo>` | Renombra un paquete existente. | `agentpack rename backend-base backend-v2` |
@@ -382,7 +403,7 @@ agentpack remove-skill backend-base docker --dry-run
 ### 8) Agregar archivo/carpeta a un paquete
 
 ```bash
-agentpack add ./skills/docker --to backend-base
+agentpack add-skill ./skills/docker --to backend-base
 ```
 
 Salida esperada (ejemplo):
@@ -392,7 +413,20 @@ agentpack: adding './skills/docker' to package 'backend-base'
 agentpack: added 'skills/docker' to package 'backend-base'
 ```
 
-### 9) Eliminar ruta interna de un paquete
+### 9) Exportar paquete a la carpeta actual
+
+```bash
+agentpack export backend-base
+```
+
+Salida esperada (ejemplo):
+
+```text
+agentpack: exporting package 'backend-base' to /ruta/proyecto/backend-base
+agentpack: package 'backend-base' exported to /ruta/proyecto/backend-base
+```
+
+### 10) Eliminar ruta interna de un paquete
 
 ```bash
 agentpack remove docker/SKILL.md --from backend-base
@@ -406,7 +440,7 @@ agentpack: removing 'docker/SKILL.md' from package 'backend-base'
 agentpack: removed 'docker/SKILL.md' from package 'backend-base'
 ```
 
-### 10) Cambiar idioma de salida
+### 11) Cambiar idioma de salida
 
 ```bash
 agentpack config set language es
@@ -422,7 +456,7 @@ agentpack: idioma actualizado a es
 agentpack: language set to en
 ```
 
-### 11) Renombrar un paquete
+### 12) Renombrar un paquete
 
 ```bash
 agentpack rename backend-base backend-v2
@@ -496,7 +530,7 @@ go build -o agentpack ./cmd/agentpack
 
 ### Error: paquete no encontrado
 
-Si ejecutas `install`, `add`, `remove`, `list-skills` o `remove-skill` y no existe el paquete, verifica:
+Si ejecutas `install`, `add-skill`, `export`, `remove`, `list-skills` o `remove-skill` y no existe el paquete, verifica:
 
 - nombre exacto del paquete (`agentpack list`),
 - ruta de almacenamiento `~/.agentpack/packages-skills`.
@@ -589,7 +623,15 @@ Flujo recomendado:
 3. Ejecuta `go fmt ./...` y `go test ./...`.
 4. Abre un Pull Request con descripcion clara.
 
-Nota: el workflow de CI en `.github/workflows/test.yml` ejecuta `go test ./...` en push/PR.
+Nota: el workflow de CI en `.github/workflows/test.yml` ejecuta `go test ./...` y validaciones de compilacion cruzada (`GOOS=linux`, `darwin`, `windows`) en push/PR.
+
+## Proteccion de rama (configuracion manual)
+
+Configura Branch Protection en `main` desde GitHub:
+
+1. Activa `Require a pull request before merging`.
+2. Activa `Require status checks to pass before merging`.
+3. Marca como requeridos los checks del workflow `test` (al menos `go-test` y `cross-build`).
 
 ## Licencia
 

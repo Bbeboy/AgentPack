@@ -86,7 +86,7 @@ func TestAddCommandPreservesRelativePathInsidePackage(t *testing.T) {
 		t.Fatalf("unexpected copied content: %q", string(data))
 	}
 
-	if !strings.Contains(output, "skills/docker/SKILL.md") {
+	if !strings.Contains(output, filepath.Join("skills", "docker", "SKILL.md")) {
 		t.Fatalf("expected relative destination in output, got %q", output)
 	}
 }
@@ -112,4 +112,16 @@ func TestAddCommandRejectsRelativeTraversal(t *testing.T) {
 		t.Fatalf("unexpected traversal error: %q", err.Error())
 	}
 	_ = errOutput
+}
+
+func TestAddCommandRejectsWindowsStyleTraversal(t *testing.T) {
+	setupCLITest(t)
+
+	_, err := cleanAddRelativePath("..\\outside.txt")
+	if err == nil {
+		t.Fatal("expected error for windows-style traversal path")
+	}
+	if !strings.Contains(err.Error(), "cannot escape") && !strings.Contains(err.Error(), "no puede salir") {
+		t.Fatalf("unexpected traversal error: %q", err.Error())
+	}
 }
