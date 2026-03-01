@@ -291,8 +291,8 @@ agentpack remove <path> --from <package-name> --dry-run
 - Expand CI with race checks and optional integration test stage.
 - Validate `SKILL.md` frontmatter and conventions (optional mode).
 - Add command to rename skills inside a package.
-- Add cross-OS support improvements (Windows/macOS).
-- Publish binary GitHub releases.
+- Add `arm64` binaries to release and cross-build matrices.
+- Enforce stricter `main` branch protection without bypass pushes.
 
 ## Contributing
 
