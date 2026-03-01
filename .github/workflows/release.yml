@@ -20,9 +20,9 @@ jobs:
         with:
           go-version: "1.23.x"
 
-      - name: Build release binaries
+      - name: Build release archives
         env:
-          VERSION: ${{ github.ref_name }}
+          VERSION_TAG: ${{ github.ref_name }}
           COMMIT: ${{ github.sha }}
           DATE: ${{ github.event.head_commit.timestamp }}
         run: |
@@ -30,24 +30,43 @@ jobs:
             DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           fi
 
-          mkdir -p dist
+          VERSION="${VERSION_TAG#v}"
+
+          mkdir -p dist build
 
           for GOOS in linux darwin windows; do
-            EXT=""
-            if [ "$GOOS" = "windows" ]; then
-              EXT=".exe"
-            fi
+            for GOARCH in amd64 arm64; do
+              BIN_NAME="agentpack"
+              if [ "$GOOS" = "windows" ]; then
+                BIN_NAME="agentpack.exe"
+              fi
 
-            GOOS="$GOOS" GOARCH=amd64 CGO_ENABLED=0 go build \
-              -ldflags "-s -w -X github.com/Bbeboy/AgentPack/internal/version.Version=${VERSION} -X github.com/Bbeboy/AgentPack/internal/version.Commit=${COMMIT} -X github.com/Bbeboy/AgentPack/internal/version.Date=${DATE}" \
-              -o "dist/agentpack-${VERSION}-${GOOS}-amd64${EXT}" \
-              ./cmd/agentpack
+              BUILD_DIR="build/${GOOS}_${GOARCH}"
+              mkdir -p "${BUILD_DIR}"
+
+              GOOS="$GOOS" GOARCH="$GOARCH" CGO_ENABLED=0 go build \
+                -ldflags "-s -w -X github.com/Bbeboy/AgentPack/internal/version.Version=${VERSION_TAG} -X github.com/Bbeboy/AgentPack/internal/version.Commit=${COMMIT} -X github.com/Bbeboy/AgentPack/internal/version.Date=${DATE}" \
+                -o "${BUILD_DIR}/${BIN_NAME}" \
+                ./cmd/agentpack
+
+              ASSET_BASE="agentpack_${VERSION}_${GOOS}_${GOARCH}"
+              if [ "$GOOS" = "windows" ]; then
+                (
+                  cd "${BUILD_DIR}"
+                  zip -q "../../dist/${ASSET_BASE}.zip" "${BIN_NAME}"
+                )
+              else
+                tar -C "${BUILD_DIR}" -czf "dist/${ASSET_BASE}.tar.gz" "${BIN_NAME}"
+              fi
+            done
           done
 
           (cd dist && sha256sum * > checksums.txt)
 
+          ls -lah dist
+
       - name: Verify Linux binary
-        run: ./dist/agentpack-${{ github.ref_name }}-linux-amd64 --version
+        run: ./build/linux_amd64/agentpack --version
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2

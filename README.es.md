@@ -30,6 +30,7 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
   - [Si agentpack no aparece en PATH](#si-agentpack-no-aparece-en-path)
   - [Opcion 2: build desde fuente](#opcion-2-build-desde-fuente)
   - [Autocompletado](#autocompletado)
+- [Actualizar AgentPack](#actualizar-agentpack)
 - [Uso rapido](#uso-rapido)
 - [Conceptos clave](#conceptos-clave)
 - [Referencia de comandos](#referencia-de-comandos)
@@ -64,13 +65,32 @@ Nota: la base de codigo usa `path/filepath` para operaciones de rutas y mantiene
 ### Opcion recomendada: binarios precompilados (GitHub Releases)
 
 1. Abre `https://github.com/Bbeboy/AgentPack/releases`
-2. Descarga el binario para tu SO (`windows`, `darwin` o `linux`)
-3. Agrega el binario al `PATH` con nombre `agentpack` (`agentpack.exe` en Windows)
-4. Verifica con:
+2. Descarga el archivo comprimido para tu SO/arquitectura (`linux`/`darwin`/`windows` x `amd64`/`arm64`)
+3. Extrae y conserva `agentpack` (`agentpack.exe` en Windows)
+4. Agrega el binario al `PATH`
+5. Verifica con:
 
 ```bash
 agentpack --help
 ```
+
+Nota: si ya tienes `agentpack` en tu `PATH`, al ejecutar directamente el binario extraido sin argumentos (por ejemplo `./agentpack`) se reemplaza automaticamente el `agentpack` instalado.
+
+Assets actuales de release:
+
+- `agentpack_<version>_darwin_amd64.tar.gz`
+- `agentpack_<version>_darwin_arm64.tar.gz`
+- `agentpack_<version>_linux_amd64.tar.gz`
+- `agentpack_<version>_linux_arm64.tar.gz`
+- `agentpack_<version>_windows_amd64.zip`
+- `agentpack_<version>_windows_arm64.zip`
+- `checksums.txt`
+
+## Actualizar AgentPack
+
+- `binarios precompilados`: descarga el release mas reciente para tu SO/arquitectura, extraelo y ejecutalo una vez sin argumentos para reemplazar el binario instalado.
+- `go install`: ejecuta `go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest`.
+- `desde fuente`: actualiza el repo, recompila e instala de nuevo en tu ruta del `PATH`.
 
 ### Opcion alternativa: go install
 
@@ -605,12 +625,13 @@ El conflicto se resuelve por skill (carpeta). Puedes:
 
 ## Roadmap
 
-- Consolidar la matriz de plataformas para `skills` con pruebas automatizadas por entorno.
-- Validacion opcional de `SKILL.md` (frontmatter y convenciones).
-- Comando para renombrar skills dentro de un paquete.
-- Extender soporte multi-plataforma para `rules`, `commands`, `agents` y `MCP` (ademas de `skills`).
-- Mejoras de soporte multiplataforma de sistema operativo (Windows/macOS).
-- Publicacion con releases binarias en GitHub.
+- Extender soporte de plataforma para `rules`, `commands`, `agents` y `MCP`.
+- Agregar `config get` y `config list` para visibilidad de configuracion en runtime.
+- Expandir CI con race checks y una etapa opcional de pruebas de integracion.
+- Validar frontmatter y convenciones de `SKILL.md` (modo opcional).
+- Agregar comando para renombrar skills dentro de un paquete.
+- Agregar binarios `arm64` a las matrices de release y cross-build.
+- Endurecer Branch Protection de `main` para evitar bypass de pushes directos.
 
 ## Contribuciones
 
@@ -623,7 +644,7 @@ Flujo recomendado:
 3. Ejecuta `go fmt ./...` y `go test ./...`.
 4. Abre un Pull Request con descripcion clara.
 
-Nota: el workflow de CI en `.github/workflows/test.yml` ejecuta `go test ./...` y validaciones de compilacion cruzada (`GOOS=linux`, `darwin`, `windows`) en push/PR.
+Nota: el workflow de CI en `.github/workflows/test.yml` ejecuta `go test ./...` y validaciones de compilacion cruzada (`GOOS=linux|darwin|windows`, `GOARCH=amd64|arm64`) en push/PR.
 
 ## Proteccion de rama (configuracion manual)
 

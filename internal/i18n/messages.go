@@ -169,6 +169,9 @@ var messageCatalog = map[string]map[string]string{
 		"storage.home":                 "could not resolve HOME: %w",
 		"storage.package.invalid":      "invalid package name: use letters, numbers, '.', '_' or '-' (max 64 chars)",
 		"storage.skill.invalid":        "invalid skill name: use letters, numbers, '.', '_' or '-' (max 64 chars)",
+		"selfinstall.target.notfound":  "could not find installed '%s' in PATH; install AgentPack first and retry",
+		"selfinstall.replace.fail":     "could not replace installed binary at %s: %w",
+		"selfinstall.success":          "agentpack: updated installed binary at %s",
 		"main.error":                   "agentpack: error: %v",
 	},
 	LangES: {
@@ -306,6 +309,9 @@ var messageCatalog = map[string]map[string]string{
 		"storage.home":                 "no se pudo obtener HOME: %w",
 		"storage.package.invalid":      "nombre de paquete invalido: usa letras, numeros, '.', '_' o '-' (max 64 caracteres)",
 		"storage.skill.invalid":        "nombre de skill invalido: usa letras, numeros, '.', '_' o '-' (max 64 caracteres)",
+		"selfinstall.target.notfound":  "no se encontro '%s' instalado en PATH; instala AgentPack primero y reintenta",
+		"selfinstall.replace.fail":     "no se pudo reemplazar el binario instalado en %s: %w",
+		"selfinstall.success":          "agentpack: binario instalado actualizado en %s",
 		"main.error":                   "agentpack: error: %v",
 	},
 }

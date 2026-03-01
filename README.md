@@ -27,9 +27,28 @@ Spanish documentation is available at `README.es.md`.
 Recommended (precompiled binaries):
 
 1. Open GitHub Releases: `https://github.com/Bbeboy/AgentPack/releases`
-2. Download your OS binary (`windows`, `darwin`, or `linux`)
-3. Add it to your `PATH` as `agentpack` (`agentpack.exe` on Windows)
-4. Verify with `agentpack --help`
+2. Download your archive for OS/arch (`linux`/`darwin`/`windows` x `amd64`/`arm64`)
+3. Extract and keep `agentpack` (`agentpack.exe` on Windows)
+4. Add it to your `PATH`
+5. Verify with `agentpack --help`
+
+Note: if you already have `agentpack` in your `PATH`, running an extracted release binary directly with no args (for example `./agentpack`) auto-replaces the installed `agentpack` binary.
+
+Current release assets:
+
+- `agentpack_<version>_darwin_amd64.tar.gz`
+- `agentpack_<version>_darwin_arm64.tar.gz`
+- `agentpack_<version>_linux_amd64.tar.gz`
+- `agentpack_<version>_linux_arm64.tar.gz`
+- `agentpack_<version>_windows_amd64.zip`
+- `agentpack_<version>_windows_arm64.zip`
+- `checksums.txt`
+
+## Updating AgentPack
+
+- `precompiled binaries`: download latest release for your OS/arch, extract, and run it once with no args to auto-replace the installed binary.
+- `go install`: run `go install github.com/Bbeboy/AgentPack/cmd/agentpack@latest`.
+- `from source`: pull latest changes, rebuild, and reinstall to your `PATH` location.
 
 Alternative (`go install`):
 
@@ -193,7 +212,7 @@ go build -o agentpack ./cmd/agentpack
 go test ./...
 ```
 
-Cross-compilation checks run in CI from `ubuntu-latest` for `GOOS=linux`, `GOOS=darwin`, and `GOOS=windows`.
+Cross-compilation checks run in CI from `ubuntu-latest` for `GOOS=linux|darwin|windows` and `GOARCH=amd64|arm64`.
 
 ### Branch Protection (manual setup)
 
@@ -249,25 +268,15 @@ GOBIN="$HOME/.local/bin" go install ./cmd/agentpack
 agentpack -v
 ```
 
-## Binary Versioning Plan (No Go Required)
+## Binary Releases
 
-To make installation direct (without `go install`), we can implement this phased release pipeline:
+Release tags (`v*`) trigger `.github/workflows/release.yml`, which builds and publishes:
 
-1. **Tag-based versioning**
-   - Use semantic tags like `v0.2.0`.
-   - Build binaries with injected metadata (`version`, `commit`, `date`) via `-ldflags`.
+- `linux`, `darwin`, `windows` x `amd64`, `arm64`
+- compressed assets (`.tar.gz` for Linux/macOS, `.zip` for Windows)
+- `checksums.txt`
 
-2. **GitHub Releases artifacts**
-   - Build matrix: `linux`, `darwin`, `windows` x `amd64`, `arm64`.
-   - Publish `.tar.gz` / `.zip` artifacts + `checksums.txt`.
-
-3. **Install script**
-   - Provide `install.sh` that detects OS/ARCH and downloads the correct release binary.
-   - Keep a one-liner install flow for users without Go.
-
-4. **Package managers (optional next step)**
-   - Homebrew tap (macOS/Linux), Scoop/winget (Windows).
-   - Reuse same GitHub Release artifacts as source of truth.
+Version metadata (`version`, `commit`, `date`) is injected at build time using `-ldflags`.
 
 ### Package not found
 
@@ -291,7 +300,6 @@ agentpack remove <path> --from <package-name> --dry-run
 - Expand CI with race checks and optional integration test stage.
 - Validate `SKILL.md` frontmatter and conventions (optional mode).
 - Add command to rename skills inside a package.
-- Add `arm64` binaries to release and cross-build matrices.
 - Enforce stricter `main` branch protection without bypass pushes.
 
 ## Contributing
