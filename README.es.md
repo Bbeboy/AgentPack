@@ -630,7 +630,6 @@ El conflicto se resuelve por skill (carpeta). Puedes:
 - Expandir CI con race checks y una etapa opcional de pruebas de integracion.
 - Validar frontmatter y convenciones de `SKILL.md` (modo opcional).
 - Agregar comando para renombrar skills dentro de un paquete.
-- Agregar binarios `arm64` a las matrices de release y cross-build.
 - Endurecer Branch Protection de `main` para evitar bypass de pushes directos.
 
 ## Contribuciones
@@ -652,7 +651,7 @@ Configura Branch Protection en `main` desde GitHub:
 
 1. Activa `Require a pull request before merging`.
 2. Activa `Require status checks to pass before merging`.
-3. Marca como requeridos los checks del workflow `test` (al menos `go-test` y `cross-build`).
+3. Marca como requerido el check `ci-gate` del workflow `test` (agrega `go-test`, `self-update-check` y `cross-build`).
 
 ## Licencia
 

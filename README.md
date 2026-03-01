@@ -220,7 +220,7 @@ GitHub branch protection must be configured in repository settings for `main`:
 
 1. Enable `Require a pull request before merging`.
 2. Enable `Require status checks to pass before merging`.
-3. Select required checks from `.github/workflows/test.yml` (at minimum `go-test` and `cross-build`).
+3. Select required check `ci-gate` from `.github/workflows/test.yml` (it aggregates `go-test`, `self-update-check`, and `cross-build`).
 
 ## Project Structure
 
