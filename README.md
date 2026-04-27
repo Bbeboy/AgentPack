@@ -1,8 +1,12 @@
 # AgentPack
 
+[![CI](https://github.com/Bbeboy/AgentPack/actions/workflows/test.yml/badge.svg)](https://github.com/Bbeboy/AgentPack/actions/workflows/test.yml)
+
 Go CLI to create, store, and install reusable agent skill packages.
 
 Spanish documentation is available at `README.es.md`.
+Architecture docs live in `docs/ARQUITECTURA.md`.
+ADR history lives in `docs/adr/`.
 
 ## Highlights
 
@@ -15,7 +19,7 @@ Spanish documentation is available at `README.es.md`.
 - Remove a package path with `remove <path> --from <package>`.
 - Rename packages with `rename`.
 - CLI output and help in English or Spanish (`config set language`, `lang`).
-- CI runs `go test ./...` on push and pull requests.
+- CI runs native tests, smoke builds, lint, self-update validation, and cross-build checks on push and pull requests.
 
 ## Requirements
 
@@ -206,13 +210,24 @@ go build -o agentpack ./cmd/agentpack
 - Test files are colocated with package code (`*_test.go`).
 - Shared test helpers live in `internal/testutil`.
 - CI workflow: `.github/workflows/test.yml`.
-- CI gate runs:
+- Native `go test ./...` matrix runs on:
+  - `ubuntu-latest` (Linux amd64)
+  - `ubuntu-24.04-arm` (Linux arm64)
+  - `macos-13` (macOS amd64)
+  - `macos-latest` (macOS arm64)
+  - `windows-latest` (Windows amd64)
+- Smoke checks build the CLI and run:
 
 ```bash
-go test ./...
+./agentpack version
+./agentpack list
+./agentpack --help
 ```
 
-Cross-compilation checks run in CI from `ubuntu-latest` for `GOOS=linux|darwin|windows` and `GOARCH=amd64|arm64`.
+- `golangci-lint` runs on `ubuntu-latest`.
+- `self-update-check` verifies the release binary can replace the installed binary.
+- Cross-compilation checks run on `ubuntu-latest` for `GOOS=linux|darwin|windows` and `GOARCH=amd64|arm64`.
+- Windows ARM64 is currently validated by cross-build only; it does not have a native CI runner in this matrix.
 
 ### Branch Protection (manual setup)
 
@@ -220,7 +235,7 @@ GitHub branch protection must be configured in repository settings for `main`:
 
 1. Enable `Require a pull request before merging`.
 2. Enable `Require status checks to pass before merging`.
-3. Select required check `ci-gate` from `.github/workflows/test.yml` (it aggregates `go-test`, `self-update-check`, and `cross-build`).
+3. Select required check `ci-gate` from `.github/workflows/test.yml` (it aggregates `go-test`, `smoke`, `lint`, `self-update-check`, and `cross-build`).
 
 ## Project Structure
 
@@ -249,6 +264,15 @@ internal/
     storage_test.go
   testutil/
     fs.go
+docs/
+  ARQUITECTURA.md
+  adr/
+    0000-decisions-log.md
+    0001-hexagonal-architecture.md
+    0002-cobra-for-cli.md
+    0003-platforms-as-data.md
+    0004-bubbletea-for-tui.md
+    0005-mcp-server-as-adapter.md
 ```
 
 ## Troubleshooting
@@ -297,16 +321,19 @@ agentpack remove <path> --from <package-name> --dry-run
 
 - Extend platform support to `rules`, `commands`, `agents`, and `MCP`.
 - Add `config get` and `config list` for runtime settings visibility.
-- Expand CI with race checks and optional integration test stage.
+- Add race checks and an optional integration test stage.
+- Introduce package manifest support as part of the migration plan.
 - Validate `SKILL.md` frontmatter and conventions (optional mode).
 - Add command to rename skills inside a package.
 - Enforce stricter `main` branch protection without bypass pushes.
 
 ## Contributing
 
+See `CONTRIBUTING.md` for the local lint/test workflow and pull request rules.
+
 1. Fork repository.
 2. Create a feature branch.
-3. Run `go fmt ./...` and `go test ./...`.
+3. Run `go test ./...` and `golangci-lint run`.
 4. Open a pull request with clear scope and rationale.
 
 ## License

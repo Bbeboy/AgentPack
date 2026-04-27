@@ -9,8 +9,22 @@ on:
 
 jobs:
   go-test:
-    name: go-test
-    runs-on: ubuntu-latest
+    name: go-test (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-amd64
+          - os: ubuntu-24.04-arm
+            label: linux-arm64
+          - os: macos-13
+            label: macos-amd64
+          - os: macos-latest
+            label: macos-arm64
+          - os: windows-latest
+            label: windows-amd64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,6 +36,66 @@ jobs:
 
       - name: Run unit and component tests
         run: go test ./...
+
+  smoke:
+    name: smoke (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-amd64
+          - os: ubuntu-24.04-arm
+            label: linux-arm64
+          - os: macos-13
+            label: macos-amd64
+          - os: macos-latest
+            label: macos-arm64
+          - os: windows-latest
+            label: windows-amd64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Build and smoke test binary (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          go build -o agentpack ./cmd/agentpack
+          ./agentpack version
+          ./agentpack list
+          ./agentpack --help
+
+      - name: Build and smoke test binary (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          go build -o agentpack.exe ./cmd/agentpack
+          .\agentpack.exe version
+          .\agentpack.exe list
+          .\agentpack.exe --help
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.8
 
   self-update-check:
     name: self-update-check
@@ -80,7 +154,7 @@ jobs:
           esac
 
   cross-build:
-    name: cross-build
+    name: cross-build (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -107,14 +181,22 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - go-test
+      - smoke
+      - lint
       - self-update-check
       - cross-build
     if: always()
     steps:
       - name: Enforce aggregated CI result
         run: |
-          if [ "${{ needs.go-test.result }}" != "success" ] || [ "${{ needs.self-update-check.result }}" != "success" ] || [ "${{ needs.cross-build.result }}" != "success" ]; then
+          if [ "${{ needs.go-test.result }}" != "success" ] || \
+             [ "${{ needs.smoke.result }}" != "success" ] || \
+             [ "${{ needs.lint.result }}" != "success" ] || \
+             [ "${{ needs.self-update-check.result }}" != "success" ] || \
+             [ "${{ needs.cross-build.result }}" != "success" ]; then
             echo "go-test=${{ needs.go-test.result }}"
+            echo "smoke=${{ needs.smoke.result }}"
+            echo "lint=${{ needs.lint.result }}"
             echo "self-update-check=${{ needs.self-update-check.result }}"
             echo "cross-build=${{ needs.cross-build.result }}"
             exit 1

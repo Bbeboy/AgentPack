@@ -1,8 +1,12 @@
 # AgentPack
 
+[![CI](https://github.com/Bbeboy/AgentPack/actions/workflows/test.yml/badge.svg)](https://github.com/Bbeboy/AgentPack/actions/workflows/test.yml)
+
 CLI en Go para crear, guardar e instalar paquetes reutilizables de skills para agentes de IA.
 
 Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y volver a instalarlas en cualquier otro proyecto con un solo comando.
+La documentacion de arquitectura vive en `docs/ARQUITECTURA.md`.
+El historial de decisiones vive en `docs/adr/`.
 
 ## Caracteristicas principales
 
@@ -37,6 +41,8 @@ Con AgentPack puedes tomar las skills de un proyecto, empaquetarlas localmente y
 - [Flujo completo con ejemplos](#flujo-completo-con-ejemplos)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Desarrollo local](#desarrollo-local)
+- [Testing y CI](#testing-y-ci)
+- [Proteccion de rama (configuracion manual)](#proteccion-de-rama-configuracion-manual)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
 - [Contribuciones](#contribuciones)
@@ -540,6 +546,38 @@ go test ./...
 go build -o agentpack ./cmd/agentpack
 ```
 
+## Testing y CI
+
+- Los tests siguen junto al codigo (`*_test.go`).
+- Los helpers compartidos viven en `internal/testutil`.
+- El workflow principal es `.github/workflows/test.yml`.
+- La matriz nativa de `go test ./...` corre en:
+  - `ubuntu-latest` (Linux amd64)
+  - `ubuntu-24.04-arm` (Linux arm64)
+  - `macos-13` (macOS amd64)
+  - `macos-latest` (macOS arm64)
+  - `windows-latest` (Windows amd64)
+- El smoke test compila el binario y ejecuta:
+
+```bash
+./agentpack version
+./agentpack list
+./agentpack --help
+```
+
+- `golangci-lint` corre en `ubuntu-latest`.
+- `self-update-check` valida el flujo de autoactualizacion del binario.
+- El cross-build verifica `linux|darwin|windows` x `amd64|arm64`.
+- Windows ARM64 por ahora se valida solo por cross-build; no tiene runner nativo en esta matriz.
+
+## Proteccion de rama (configuracion manual)
+
+Configura Branch Protection en `main` desde GitHub:
+
+1. Activa `Require a pull request before merging`.
+2. Activa `Require status checks to pass before merging`.
+3. Marca como requerido el check `ci-gate` del workflow `test` (agrega `go-test`, `smoke`, `lint`, `self-update-check` y `cross-build`).
+
 ## Troubleshooting
 
 ### `agentpack: command not found`
@@ -627,7 +665,8 @@ El conflicto se resuelve por skill (carpeta). Puedes:
 
 - Extender soporte de plataforma para `rules`, `commands`, `agents` y `MCP`.
 - Agregar `config get` y `config list` para visibilidad de configuracion en runtime.
-- Expandir CI con race checks y una etapa opcional de pruebas de integracion.
+- Agregar race checks y una etapa opcional de pruebas de integracion.
+- Introducir soporte de manifiesto por paquete dentro del plan de migracion.
 - Validar frontmatter y convenciones de `SKILL.md` (modo opcional).
 - Agregar comando para renombrar skills dentro de un paquete.
 - Endurecer Branch Protection de `main` para evitar bypass de pushes directos.
@@ -636,22 +675,14 @@ El conflicto se resuelve por skill (carpeta). Puedes:
 
 Las contribuciones son bienvenidas. Para cambios grandes, abre primero un issue para discutir la propuesta.
 
+Consulta `CONTRIBUTING.md` para el flujo local de lint/tests y las reglas de Pull Request.
+
 Flujo recomendado:
 
 1. Fork del repositorio.
 2. Crea una rama de feature.
-3. Ejecuta `go fmt ./...` y `go test ./...`.
+3. Ejecuta `go test ./...` y `golangci-lint run`.
 4. Abre un Pull Request con descripcion clara.
-
-Nota: el workflow de CI en `.github/workflows/test.yml` ejecuta `go test ./...` y validaciones de compilacion cruzada (`GOOS=linux|darwin|windows`, `GOARCH=amd64|arm64`) en push/PR.
-
-## Proteccion de rama (configuracion manual)
-
-Configura Branch Protection en `main` desde GitHub:
-
-1. Activa `Require a pull request before merging`.
-2. Activa `Require status checks to pass before merging`.
-3. Marca como requerido el check `ci-gate` del workflow `test` (agrega `go-test`, `self-update-check` y `cross-build`).
 
 ## Licencia
 

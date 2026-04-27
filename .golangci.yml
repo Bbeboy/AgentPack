@@ -1,0 +1,25 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - depguard
+    - errcheck
+    - gofmt
+    - govet
+    - ineffassign
+    - staticcheck
+
+linters-settings:
+  depguard:
+    rules:
+      domain:
+        list-mode: lax
+        files:
+          - "**/internal/domain/**"
+        deny: []
+      app:
+        list-mode: lax
+        files:
+          - "**/internal/app/**"
+        deny: []
